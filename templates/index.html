@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Camera Cafe Search Engine</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/tasti.css">
+<!-- Link per Font Awesome (se non è già incluso nel tuo progetto) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Camera Cafe Search Engine</h1>
+        <p class="text-center">Inserire delle parole chiave per ricercare un particolare episodio.</p>
+        <form action="/search" method="POST" class="mb-4">
+            <div class="row justify-content-center">
+            <div class="col-md-6 d-flex">
+                <input type="text" name="query" id="queryInput" class="form-control" value="{{ request.form['query'] if request.form.get('query') else '' }}" placeholder="Inserisci il titolo dell'episodio">
+                <button type="button" class="btn btn-outline-secondary" id="clearInputButton" onclick="clearInput()">     
+                    <i class="fas fa-times"></i> <!-- Icona della "X" -->
+                </button>           
+            </div>
+
+
+                <!-- Filtri Button (now to the left) -->
+                <div class="col-md-2">
+                    <button id="filters" type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#filtersModal">Filtri</button>
+                </div>
+
+                <!-- Avvia ricerca Button -->
+                <div class="col-md-2">
+                    <button id="start_research" type="submit" name="submit_action" value="submit_general" class="btn btn-primary w-100">Avvia la ricerca</button>
+                </div>
+
+  
+
+          
+
+
+            </div>
+
+
+       <br>
+        <br>
+
+
+        <!-- Mostra i risultati -->
+{% if tabella_html %}
+    <div class="table-responsive">
+        {{ tabella_html|safe }}
+    </div>
+  <br>
+    <p id="row-count" class="text-center"></p>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('.table-responsive table');
+            if (table) {
+                const rowCount = table.querySelectorAll('tbody tr').length;
+                document.getElementById('row-count').textContent = `Risultati trovati: ${rowCount}`;
+            }
+        });
+    </script>
+{% else %}
+    <p class="text-center">Effettua una ricerca per vedere i risultati.</p>
+{% endif %}
+
+
+    <!-- Modal for Filters -->
+<!-- Modal for Filters -->
+<div class="modal fade" id="filtersModal" tabindex="-1" aria-labelledby="filtersModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filtersModalLabel">Seleziona i Filtri</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Left Column for First Three Filters -->
+                    <div class="left-column">
+                        <!-- Season Filter -->
+        
+
+
+
+
+                        <h6>Seleziona le stagioni:</h6>
+                        <div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="season1" name="season" value="1"  {% if '1' in seasons_selected %}checked{% endif %}>
+                                <label for="season1">Stagione 1</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="season2" name="season" value="2"   {% if '2' in seasons_selected %}checked{% endif %}>
+                                <label for="season2">Stagione 2</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="season3" name="season" value="3"  {% if '3' in seasons_selected %}checked{% endif %}>
+                                <label for="season3">Stagione 3</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="season4" name="season" value="4"   {% if '4' in seasons_selected %}checked{% endif %}>
+                                <label for="season4">Stagione 4</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="season5" name="season" value="5"   {% if '5' in seasons_selected %}checked{% endif %}>
+                                <label for="season5">Stagione 5</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="season6" name="season" value="6"   {% if '6' in seasons_selected %}checked{% endif %}>
+                            <label for="season6">Stagione 6</label>
+                            </div>
+                        </div>
+                        <hr>
+
+                        <!-- Guest Stars Filter -->
+                        <h6>Seleziona le guest star:</h6>
+                        <input type="text" id="guestSearch" class="form-control mb-3" placeholder="Cerca tra le guest star">
+                        <div class="scroll-container" id="guestStarsList">
+ 
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Adriana De Guilmi" name="guest_star" value="Adriana De Guilmi" {% if 'Adriana De Guilmi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Adriana De Guilmi">Adriana De Guilmi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Adriano Braidotti" name="guest_star" value="Adriano Braidotti" {% if 'Adriano Braidotti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Adriano Braidotti">Adriano Braidotti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Adriano Martinez" name="guest_star" value="Adriano Martinez" {% if 'Adriano Martinez' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Adriano Martinez">Adriano Martinez</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Adriano Passoni" name="guest_star" value="Adriano Passoni" {% if 'Adriano Passoni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Adriano Passoni">Adriano Passoni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Ajub Elamraoui" name="guest_star" value="Ajub Elamraoui" {% if 'Ajub Elamraoui' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Ajub Elamraoui">Ajub Elamraoui</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Albertino" name="guest_star" value="Albertino" {% if 'Albertino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Albertino">Albertino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alberto Angrisano" name="guest_star" value="Alberto Angrisano" {% if 'Alberto Angrisano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alberto Angrisano">Alberto Angrisano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alberto Bognanni" name="guest_star" value="Alberto Bognanni" {% if 'Alberto Bognanni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alberto Bognanni">Alberto Bognanni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alberto Fasoli" name="guest_star" value="Alberto Fasoli" {% if 'Alberto Fasoli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alberto Fasoli">Alberto Fasoli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alberto Giusta" name="guest_star" value="Alberto Giusta" {% if 'Alberto Giusta' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alberto Giusta">Alberto Giusta</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alberto Onofrietti" name="guest_star" value="Alberto Onofrietti" {% if 'Alberto Onofrietti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alberto Onofrietti">Alberto Onofrietti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alberto Pistacchia" name="guest_star" value="Alberto Pistacchia" {% if 'Alberto Pistacchia' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alberto Pistacchia">Alberto Pistacchia</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alena Šeredová" name="guest_star" value="Alena Šeredová" {% if 'Alena Šeredová' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alena Šeredová">Alena Šeredová</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Adriano" name="guest_star" value="Alessandro Adriano" {% if 'Alessandro Adriano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Adriano">Alessandro Adriano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Bergallo" name="guest_star" value="Alessandro Bergallo" {% if 'Alessandro Bergallo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Bergallo">Alessandro Bergallo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Borghese" name="guest_star" value="Alessandro Borghese" {% if 'Alessandro Borghese' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Borghese">Alessandro Borghese</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Campanile" name="guest_star" value="Alessandro Campanile" {% if 'Alessandro Campanile' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Campanile">Alessandro Campanile</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Curino" name="guest_star" value="Alessandro Curino" {% if 'Alessandro Curino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Curino">Alessandro Curino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Dinuzzi" name="guest_star" value="Alessandro Dinuzzi" {% if 'Alessandro Dinuzzi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Dinuzzi">Alessandro Dinuzzi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Gabelli" name="guest_star" value="Alessandro Gabelli" {% if 'Alessandro Gabelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Gabelli">Alessandro Gabelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Genovesi" name="guest_star" value="Alessandro Genovesi" {% if 'Alessandro Genovesi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Genovesi">Alessandro Genovesi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Gruttadauria" name="guest_star" value="Alessandro Gruttadauria" {% if 'Alessandro Gruttadauria' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Gruttadauria">Alessandro Gruttadauria</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Haber" name="guest_star" value="Alessandro Haber" {% if 'Alessandro Haber' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Haber">Alessandro Haber</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Mistichelli" name="guest_star" value="Alessandro Mistichelli" {% if 'Alessandro Mistichelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Mistichelli">Alessandro Mistichelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Politi" name="guest_star" value="Alessandro Politi" {% if 'Alessandro Politi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Politi">Alessandro Politi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessandro Scavone" name="guest_star" value="Alessandro Scavone" {% if 'Alessandro Scavone' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessandro Scavone">Alessandro Scavone</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessia Marcuzzi" name="guest_star" value="Alessia Marcuzzi" {% if 'Alessia Marcuzzi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessia Marcuzzi">Alessia Marcuzzi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessia Spinelli" name="guest_star" value="Alessia Spinelli" {% if 'Alessia Spinelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessia Spinelli">Alessia Spinelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alessia Ventura" name="guest_star" value="Alessia Ventura" {% if 'Alessia Ventura' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alessia Ventura">Alessia Ventura</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alex Cendron" name="guest_star" value="Alex Cendron" {% if 'Alex Cendron' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alex Cendron">Alex Cendron</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alex Sassatelli" name="guest_star" value="Alex Sassatelli" {% if 'Alex Sassatelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alex Sassatelli">Alex Sassatelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Alex Zanardi" name="guest_star" value="Alex Zanardi" {% if 'Alex Zanardi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Alex Zanardi">Alex Zanardi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Amadeus" name="guest_star" value="Amadeus" {% if 'Amadeus' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Amadeus">Amadeus</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Orancone" name="guest_star" value="Andrea Orancone" {% if 'Andrea Orancone' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Orancone">Andrea Orancone</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Baiardi" name="guest_star" value="Andrea Baiardi" {% if 'Andrea Baiardi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Baiardi">Andrea Baiardi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Beltramo" name="guest_star" value="Andrea Beltramo" {% if 'Andrea Beltramo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Beltramo">Andrea Beltramo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Berlinghieri" name="guest_star" value="Andrea Berlinghieri" {% if 'Andrea Berlinghieri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Berlinghieri">Andrea Berlinghieri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Brancone" name="guest_star" value="Andrea Brancone" {% if 'Andrea Brancone' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Brancone">Andrea Brancone</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Caimmi" name="guest_star" value="Andrea Caimmi" {% if 'Andrea Caimmi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Caimmi">Andrea Caimmi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Carraro" name="guest_star" value="Andrea Carraro" {% if 'Andrea Carraro' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Carraro">Andrea Carraro</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Dianetti" name="guest_star" value="Andrea Dianetti" {% if 'Andrea Dianetti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Dianetti">Andrea Dianetti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Marchesi" name="guest_star" value="Andrea Marchesi" {% if 'Andrea Marchesi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Marchesi">Andrea Marchesi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Montuschi" name="guest_star" value="Andrea Montuschi" {% if 'Andrea Montuschi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Montuschi">Andrea Montuschi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Piovan" name="guest_star" value="Andrea Piovan" {% if 'Andrea Piovan' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Piovan">Andrea Piovan</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Ramilli" name="guest_star" value="Andrea Ramilli" {% if 'Andrea Ramilli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Ramilli">Andrea Ramilli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andrea Santonastaso" name="guest_star" value="Andrea Santonastaso" {% if 'Andrea Santonastaso' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andrea Santonastaso">Andrea Santonastaso</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Andy Luotto" name="guest_star" value="Andy Luotto" {% if 'Andy Luotto' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Andy Luotto">Andy Luotto</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Angelo Pintus" name="guest_star" value="Angelo Pintus" {% if 'Angelo Pintus' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Angelo Pintus">Angelo Pintus</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Anna Bonasso" name="guest_star" value="Anna Bonasso" {% if 'Anna Bonasso' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Anna Bonasso">Anna Bonasso</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Anna Safroncik" name="guest_star" value="Anna Safroncik" {% if 'Anna Safroncik' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Anna Safroncik">Anna Safroncik</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Antonella Dragotta" name="guest_star" value="Antonella Dragotta" {% if 'Antonella Dragotta' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Antonella Dragotta">Antonella Dragotta</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Antonio Brugnano" name="guest_star" value="Antonio Brugnano" {% if 'Antonio Brugnano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Antonio Brugnano">Antonio Brugnano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Antonio Conte" name="guest_star" value="Antonio Conte" {% if 'Antonio Conte' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Antonio Conte">Antonio Conte</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Antonio Russo" name="guest_star" value="Antonio Russo" {% if 'Antonio Russo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Antonio Russo">Antonio Russo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Antonio Zavatteri" name="guest_star" value="Antonio Zavatteri" {% if 'Antonio Zavatteri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Antonio Zavatteri">Antonio Zavatteri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Arianna Bergamaschi" name="guest_star" value="Arianna Bergamaschi" {% if 'Arianna Bergamaschi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Arianna Bergamaschi">Arianna Bergamaschi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Arturo Di Tullio" name="guest_star" value="Arturo Di Tullio" {% if 'Arturo Di Tullio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Arturo Di Tullio">Arturo Di Tullio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Aída Yéspica" name="guest_star" value="Aída Yéspica" {% if 'Aída Yéspica' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Aída Yéspica">Aída Yéspica</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Barbara Chiappini" name="guest_star" value="Barbara Chiappini" {% if 'Barbara Chiappini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Barbara Chiappini">Barbara Chiappini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Barbara Esposito" name="guest_star" value="Barbara Esposito" {% if 'Barbara Esposito' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Barbara Esposito">Barbara Esposito</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Barbara Faggioli" name="guest_star" value="Barbara Faggioli" {% if 'Barbara Faggioli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Barbara Faggioli">Barbara Faggioli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Beatrice Maestrini" name="guest_star" value="Beatrice Maestrini" {% if 'Beatrice Maestrini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Beatrice Maestrini">Beatrice Maestrini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Beatrice Schiros" name="guest_star" value="Beatrice Schiros" {% if 'Beatrice Schiros' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Beatrice Schiros">Beatrice Schiros</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Bedy Moratti" name="guest_star" value="Bedy Moratti" {% if 'Bedy Moratti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Bedy Moratti">Bedy Moratti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Benedetta Parodi" name="guest_star" value="Benedetta Parodi" {% if 'Benedetta Parodi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Benedetta Parodi">Benedetta Parodi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Beppe Severgnini" name="guest_star" value="Beppe Severgnini" {% if 'Beppe Severgnini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Beppe Severgnini">Beppe Severgnini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Bob Messini" name="guest_star" value="Bob Messini" {% if 'Bob Messini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Bob Messini">Bob Messini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Brando Giorgi" name="guest_star" value="Brando Giorgi" {% if 'Brando Giorgi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Brando Giorgi">Brando Giorgi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Branko Vikich" name="guest_star" value="Branko Vikich" {% if 'Branko Vikich' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Branko Vikich">Branko Vikich</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Bruno Solo" name="guest_star" value="Bruno Solo" {% if 'Bruno Solo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Bruno Solo">Bruno Solo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Camilla Semino Favro" name="guest_star" value="Camilla Semino Favro" {% if 'Camilla Semino Favro' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Camilla Semino Favro">Camilla Semino Favro</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Carla Chiarelli" name="guest_star" value="Carla Chiarelli" {% if 'Carla Chiarelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Carla Chiarelli">Carla Chiarelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Carla Signoris" name="guest_star" value="Carla Signoris" {% if 'Carla Signoris' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Carla Signoris">Carla Signoris</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Carlo De Ruggieri" name="guest_star" value="Carlo De Ruggieri" {% if 'Carlo De Ruggieri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Carlo De Ruggieri">Carlo De Ruggieri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Carlo Decio" name="guest_star" value="Carlo Decio" {% if 'Carlo Decio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Carlo Decio">Carlo Decio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Carlo Puzo Gerbino" name="guest_star" value="Carlo Puzo Gerbino" {% if 'Carlo Puzo Gerbino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Carlo Puzo Gerbino">Carlo Puzo Gerbino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Caroline Sanchez" name="guest_star" value="Caroline Sanchez" {% if 'Caroline Sanchez' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Caroline Sanchez">Caroline Sanchez</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Cecilia Vecchio" name="guest_star" value="Cecilia Vecchio" {% if 'Cecilia Vecchio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Cecilia Vecchio">Cecilia Vecchio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Cesare Spagnuolo" name="guest_star" value="Cesare Spagnuolo" {% if 'Cesare Spagnuolo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Cesare Spagnuolo">Cesare Spagnuolo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Chen Ruisheng" name="guest_star" value="Chen Ruisheng" {% if 'Chen Ruisheng' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Chen Ruisheng">Chen Ruisheng</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Chiara Andreis" name="guest_star" value="Chiara Andreis" {% if 'Chiara Andreis' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Chiara Andreis">Chiara Andreis</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Chiara Claudi" name="guest_star" value="Chiara Claudi" {% if 'Chiara Claudi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Chiara Claudi">Chiara Claudi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Chiara Francini" name="guest_star" value="Chiara Francini" {% if 'Chiara Francini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Chiara Francini">Chiara Francini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Christian Giammarini" name="guest_star" value="Christian Giammarini" {% if 'Christian Giammarini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Christian Giammarini">Christian Giammarini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Claudia Gerini" name="guest_star" value="Claudia Gerini" {% if 'Claudia Gerini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Claudia Gerini">Claudia Gerini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Claudia Grego" name="guest_star" value="Claudia Grego" {% if 'Claudia Grego' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Claudia Grego">Claudia Grego</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Claudia Griffini" name="guest_star" value="Claudia Griffini" {% if 'Claudia Griffini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Claudia Griffini">Claudia Griffini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Claudia Lawrence" name="guest_star" value="Claudia Lawrence" {% if 'Claudia Lawrence' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Claudia Lawrence">Claudia Lawrence</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Claudio Migliavacca" name="guest_star" value="Claudio Migliavacca" {% if 'Claudio Migliavacca' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Claudio Migliavacca">Claudio Migliavacca</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Claudio Sterpone" name="guest_star" value="Claudio Sterpone" {% if 'Claudio Sterpone' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Claudio Sterpone">Claudio Sterpone</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Claudio Taroppi" name="guest_star" value="Claudio Taroppi" {% if 'Claudio Taroppi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Claudio Taroppi">Claudio Taroppi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Clelia Piscitello" name="guest_star" value="Clelia Piscitello" {% if 'Clelia Piscitello' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Clelia Piscitello">Clelia Piscitello</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Clizia Fornasier" name="guest_star" value="Clizia Fornasier" {% if 'Clizia Fornasier' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Clizia Fornasier">Clizia Fornasier</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Corrado Villa" name="guest_star" value="Corrado Villa" {% if 'Corrado Villa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Corrado Villa">Corrado Villa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Cristian Stelluti" name="guest_star" value="Cristian Stelluti" {% if 'Cristian Stelluti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Cristian Stelluti">Cristian Stelluti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Cristiano Caldironi" name="guest_star" value="Cristiano Caldironi" {% if 'Cristiano Caldironi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Cristiano Caldironi">Cristiano Caldironi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Daniela Airoldi" name="guest_star" value="Daniela Airoldi" {% if 'Daniela Airoldi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Daniela Airoldi">Daniela Airoldi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Daniele Cantalupo" name="guest_star" value="Daniele Cantalupo" {% if 'Daniele Cantalupo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Daniele Cantalupo">Daniele Cantalupo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Daniele Gaggianese" name="guest_star" value="Daniele Gaggianese" {% if 'Daniele Gaggianese' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Daniele Gaggianese">Daniele Gaggianese</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Daniele Gatti" name="guest_star" value="Daniele Gatti" {% if 'Daniele Gatti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Daniele Gatti">Daniele Gatti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Daniele Maltempi" name="guest_star" value="Daniele Maltempi" {% if 'Daniele Maltempi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Daniele Maltempi">Daniele Maltempi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Danilo De Summa" name="guest_star" value="Danilo De Summa" {% if 'Danilo De Summa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Danilo De Summa">Danilo De Summa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Danilo Gallinari" name="guest_star" value="Danilo Gallinari" {% if 'Danilo Gallinari' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Danilo Gallinari">Danilo Gallinari</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Danilo Nessi" name="guest_star" value="Danilo Nessi" {% if 'Danilo Nessi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Danilo Nessi">Danilo Nessi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Dario Dossena" name="guest_star" value="Dario Dossena" {% if 'Dario Dossena' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Dario Dossena">Dario Dossena</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Dario Solini" name="guest_star" value="Dario Solini" {% if 'Dario Solini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Dario Solini">Dario Solini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="David Parenzo" name="guest_star" value="David Parenzo" {% if 'David Parenzo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="David Parenzo">David Parenzo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="David Sef" name="guest_star" value="David Sef" {% if 'David Sef' in guest_stars_selected %}checked{% endif %}>
+                        <label for="David Sef">David Sef</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Davide Dalusio" name="guest_star" value="Davide Dalusio" {% if 'Davide Dalusio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Davide Dalusio">Davide Dalusio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Davide Di Stefano" name="guest_star" value="Davide Di Stefano" {% if 'Davide Di Stefano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Davide Di Stefano">Davide Di Stefano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Davide Giandrini" name="guest_star" value="Davide Giandrini" {% if 'Davide Giandrini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Davide Giandrini">Davide Giandrini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Davide Iacopini" name="guest_star" value="Davide Iacopini" {% if 'Davide Iacopini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Davide Iacopini">Davide Iacopini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Davide Paniate" name="guest_star" value="Davide Paniate" {% if 'Davide Paniate' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Davide Paniate">Davide Paniate</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Davide Silvestri" name="guest_star" value="Davide Silvestri" {% if 'Davide Silvestri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Davide Silvestri">Davide Silvestri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Davide Umiliata" name="guest_star" value="Davide Umiliata" {% if 'Davide Umiliata' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Davide Umiliata">Davide Umiliata</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Debora Zuin" name="guest_star" value="Debora Zuin" {% if 'Debora Zuin' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Debora Zuin">Debora Zuin</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Diego Balconi" name="guest_star" value="Diego Balconi" {% if 'Diego Balconi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Diego Balconi">Diego Balconi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Diego Casale" name="guest_star" value="Diego Casale" {% if 'Diego Casale' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Diego Casale">Diego Casale</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Dino Abbrescia" name="guest_star" value="Dino Abbrescia" {% if 'Dino Abbrescia' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Dino Abbrescia">Dino Abbrescia</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Domenico Di Berardino" name="guest_star" value="Domenico Di Berardino" {% if 'Domenico Di Berardino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Domenico Di Berardino">Domenico Di Berardino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Edoardo Ribatto" name="guest_star" value="Edoardo Ribatto" {% if 'Edoardo Ribatto' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Edoardo Ribatto">Edoardo Ribatto</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Elena Lietti" name="guest_star" value="Elena Lietti" {% if 'Elena Lietti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Elena Lietti">Elena Lietti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Elena Ramogino" name="guest_star" value="Elena Ramogino" {% if 'Elena Ramogino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Elena Ramogino">Elena Ramogino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Ellen Hidding" name="guest_star" value="Ellen Hidding" {% if 'Ellen Hidding' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Ellen Hidding">Ellen Hidding</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Emanuele Barresi" name="guest_star" value="Emanuele Barresi" {% if 'Emanuele Barresi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Emanuele Barresi">Emanuele Barresi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Emanuele Fiore" name="guest_star" value="Emanuele Fiore" {% if 'Emanuele Fiore' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Emanuele Fiore">Emanuele Fiore</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Emanuele Fortunati" name="guest_star" value="Emanuele Fortunati" {% if 'Emanuele Fortunati' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Emanuele Fortunati">Emanuele Fortunati</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Emanuele Salce" name="guest_star" value="Emanuele Salce" {% if 'Emanuele Salce' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Emanuele Salce">Emanuele Salce</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Emiliana Perina" name="guest_star" value="Emiliana Perina" {% if 'Emiliana Perina' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Emiliana Perina">Emiliana Perina</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Emiliano Bradi" name="guest_star" value="Emiliano Bradi" {% if 'Emiliano Bradi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Emiliano Bradi">Emiliano Bradi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Emmanuel Galli" name="guest_star" value="Emmanuel Galli" {% if 'Emmanuel Galli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Emmanuel Galli">Emmanuel Galli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Enrica Barel" name="guest_star" value="Enrica Barel" {% if 'Enrica Barel' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Enrica Barel">Enrica Barel</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Enrico Baroni" name="guest_star" value="Enrico Baroni" {% if 'Enrico Baroni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Enrico Baroni">Enrico Baroni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Enrico Beruschi" name="guest_star" value="Enrico Beruschi" {% if 'Enrico Beruschi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Enrico Beruschi">Enrico Beruschi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Enrico Ceva" name="guest_star" value="Enrico Ceva" {% if 'Enrico Ceva' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Enrico Ceva">Enrico Ceva</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Enrico Salimbeni" name="guest_star" value="Enrico Salimbeni" {% if 'Enrico Salimbeni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Enrico Salimbeni">Enrico Salimbeni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Enzo Brasolin" name="guest_star" value="Enzo Brasolin" {% if 'Enzo Brasolin' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Enzo Brasolin">Enzo Brasolin</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Enzo Giraldo" name="guest_star" value="Enzo Giraldo" {% if 'Enzo Giraldo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Enzo Giraldo">Enzo Giraldo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Eric Claire" name="guest_star" value="Eric Claire" {% if 'Eric Claire' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Eric Claire">Eric Claire</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Ettore Distasio" name="guest_star" value="Ettore Distasio" {% if 'Ettore Distasio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Ettore Distasio">Ettore Distasio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Eugenio Gradabosco" name="guest_star" value="Eugenio Gradabosco" {% if 'Eugenio Gradabosco' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Eugenio Gradabosco">Eugenio Gradabosco</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Eva Collini" name="guest_star" value="Eva Collini" {% if 'Eva Collini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Eva Collini">Eva Collini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabio Caressa" name="guest_star" value="Fabio Caressa" {% if 'Fabio Caressa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabio Caressa">Fabio Caressa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabio Marchisio" name="guest_star" value="Fabio Marchisio" {% if 'Fabio Marchisio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabio Marchisio">Fabio Marchisio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabio Martinello" name="guest_star" value="Fabio Martinello" {% if 'Fabio Martinello' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabio Martinello">Fabio Martinello</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabio Traversa" name="guest_star" value="Fabio Traversa" {% if 'Fabio Traversa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabio Traversa">Fabio Traversa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabio Troiano" name="guest_star" value="Fabio Troiano" {% if 'Fabio Troiano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabio Troiano">Fabio Troiano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabio Vassallo" name="guest_star" value="Fabio Vassallo" {% if 'Fabio Vassallo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabio Vassallo">Fabio Vassallo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabio Volo" name="guest_star" value="Fabio Volo" {% if 'Fabio Volo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabio Volo">Fabio Volo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabio Zerba" name="guest_star" value="Fabio Zerba" {% if 'Fabio Zerba' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabio Zerba">Fabio Zerba</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabrizio Gasparetto" name="guest_star" value="Fabrizio Gasparetto" {% if 'Fabrizio Gasparetto' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabrizio Gasparetto">Fabrizio Gasparetto</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabrizio Lombardo" name="guest_star" value="Fabrizio Lombardo" {% if 'Fabrizio Lombardo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabrizio Lombardo">Fabrizio Lombardo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabrizio Martorelli" name="guest_star" value="Fabrizio Martorelli" {% if 'Fabrizio Martorelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabrizio Martorelli">Fabrizio Martorelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabrizio Pagella" name="guest_star" value="Fabrizio Pagella" {% if 'Fabrizio Pagella' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabrizio Pagella">Fabrizio Pagella</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fabrizio Viganò" name="guest_star" value="Fabrizio Viganò" {% if 'Fabrizio Viganò' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fabrizio Viganò">Fabrizio Viganò</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fatah Ghedi" name="guest_star" value="Fatah Ghedi" {% if 'Fatah Ghedi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fatah Ghedi">Fatah Ghedi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Federica Fabiani" name="guest_star" value="Federica Fabiani" {% if 'Federica Fabiani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Federica Fabiani">Federica Fabiani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Federico Bonaconza" name="guest_star" value="Federico Bonaconza" {% if 'Federico Bonaconza' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Federico Bonaconza">Federico Bonaconza</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Federico Bonoconza" name="guest_star" value="Federico Bonoconza" {% if 'Federico Bonoconza' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Federico Bonoconza">Federico Bonoconza</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Federico Gobbi" name="guest_star" value="Federico Gobbi" {% if 'Federico Gobbi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Federico Gobbi">Federico Gobbi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Federico Russo" name="guest_star" value="Federico Russo" {% if 'Federico Russo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Federico Russo">Federico Russo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Federico Torre" name="guest_star" value="Federico Torre" {% if 'Federico Torre' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Federico Torre">Federico Torre</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Filippo Chiero" name="guest_star" value="Filippo Chiero" {% if 'Filippo Chiero' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Filippo Chiero">Filippo Chiero</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Filippo Usellini" name="guest_star" value="Filippo Usellini" {% if 'Filippo Usellini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Filippo Usellini">Filippo Usellini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Fioretta Mari" name="guest_star" value="Fioretta Mari" {% if 'Fioretta Mari' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Fioretta Mari">Fioretta Mari</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Flavio Insinna" name="guest_star" value="Flavio Insinna" {% if 'Flavio Insinna' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Flavio Insinna">Flavio Insinna</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Flavio Parenti" name="guest_star" value="Flavio Parenti" {% if 'Flavio Parenti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Flavio Parenti">Flavio Parenti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesca Belussi" name="guest_star" value="Francesca Belussi" {% if 'Francesca Belussi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesca Belussi">Francesca Belussi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesca Faiella" name="guest_star" value="Francesca Faiella" {% if 'Francesca Faiella' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesca Faiella">Francesca Faiella</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesca Giovannetti" name="guest_star" value="Francesca Giovannetti" {% if 'Francesca Giovannetti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesca Giovannetti">Francesca Giovannetti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesca Martinez" name="guest_star" value="Francesca Martinez" {% if 'Francesca Martinez' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesca Martinez">Francesca Martinez</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesco Angeli" name="guest_star" value="Francesco Angeli" {% if 'Francesco Angeli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesco Angeli">Francesco Angeli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesco Arienzo" name="guest_star" value="Francesco Arienzo" {% if 'Francesco Arienzo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesco Arienzo">Francesco Arienzo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesco Faeti" name="guest_star" value="Francesco Faeti" {% if 'Francesco Faeti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesco Faeti">Francesco Faeti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesco Leoni" name="guest_star" value="Francesco Leoni" {% if 'Francesco Leoni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesco Leoni">Francesco Leoni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesco Leschiera" name="guest_star" value="Francesco Leschiera" {% if 'Francesco Leschiera' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesco Leschiera">Francesco Leschiera</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesco Meola" name="guest_star" value="Francesco Meola" {% if 'Francesco Meola' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesco Meola">Francesco Meola</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesco Pannofino" name="guest_star" value="Francesco Pannofino" {% if 'Francesco Pannofino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesco Pannofino">Francesco Pannofino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Francesco Randazzo" name="guest_star" value="Francesco Randazzo" {% if 'Francesco Randazzo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Francesco Randazzo">Francesco Randazzo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Franco Maino" name="guest_star" value="Franco Maino" {% if 'Franco Maino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Franco Maino">Franco Maino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gabriele Ciavarra" name="guest_star" value="Gabriele Ciavarra" {% if 'Gabriele Ciavarra' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gabriele Ciavarra">Gabriele Ciavarra</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gabriella Franchini" name="guest_star" value="Gabriella Franchini" {% if 'Gabriella Franchini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gabriella Franchini">Gabriella Franchini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gaetano Varcasia" name="guest_star" value="Gaetano Varcasia" {% if 'Gaetano Varcasia' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gaetano Varcasia">Gaetano Varcasia</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gaia Messerklinger" name="guest_star" value="Gaia Messerklinger" {% if 'Gaia Messerklinger' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gaia Messerklinger">Gaia Messerklinger</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gaia ed Eva" name="guest_star" value="Gaia ed Eva" {% if 'Gaia ed Eva' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gaia ed Eva">Gaia ed Eva</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giacomo Valenti" name="guest_star" value="Giacomo Valenti" {% if 'Giacomo Valenti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giacomo Valenti">Giacomo Valenti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giampiero Bartolini" name="guest_star" value="Giampiero Bartolini" {% if 'Giampiero Bartolini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giampiero Bartolini">Giampiero Bartolini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gianluca Frigerio" name="guest_star" value="Gianluca Frigerio" {% if 'Gianluca Frigerio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gianluca Frigerio">Gianluca Frigerio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gianluca Gambino" name="guest_star" value="Gianluca Gambino" {% if 'Gianluca Gambino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gianluca Gambino">Gianluca Gambino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gianluca Iacono" name="guest_star" value="Gianluca Iacono" {% if 'Gianluca Iacono' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gianluca Iacono">Gianluca Iacono</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gianmarco Tognazzi" name="guest_star" value="Gianmarco Tognazzi" {% if 'Gianmarco Tognazzi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gianmarco Tognazzi">Gianmarco Tognazzi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gianni Ansaldi" name="guest_star" value="Gianni Ansaldi" {% if 'Gianni Ansaldi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gianni Ansaldi">Gianni Ansaldi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gianni Bissaca" name="guest_star" value="Gianni Bissaca" {% if 'Gianni Bissaca' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gianni Bissaca">Gianni Bissaca</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gianni Quillico" name="guest_star" value="Gianni Quillico" {% if 'Gianni Quillico' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gianni Quillico">Gianni Quillico</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gianpaolo Gambi" name="guest_star" value="Gianpaolo Gambi" {% if 'Gianpaolo Gambi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gianpaolo Gambi">Gianpaolo Gambi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gibba" name="guest_star" value="Gibba" {% if 'Gibba' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gibba">Gibba</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gimmy Andersen" name="guest_star" value="Gimmy Andersen" {% if 'Gimmy Andersen' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gimmy Andersen">Gimmy Andersen</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gioele Dix" name="guest_star" value="Gioele Dix" {% if 'Gioele Dix' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gioele Dix">Gioele Dix</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giorgia Palmas" name="guest_star" value="Giorgia Palmas" {% if 'Giorgia Palmas' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giorgia Palmas">Giorgia Palmas</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giorgia Senesi" name="guest_star" value="Giorgia Senesi" {% if 'Giorgia Senesi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giorgia Senesi">Giorgia Senesi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giorgio Mastrota" name="guest_star" value="Giorgio Mastrota" {% if 'Giorgio Mastrota' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giorgio Mastrota">Giorgio Mastrota</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giorgio Reali" name="guest_star" value="Giorgio Reali" {% if 'Giorgio Reali' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giorgio Reali">Giorgio Reali</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giovanna Civitillo" name="guest_star" value="Giovanna Civitillo" {% if 'Giovanna Civitillo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giovanna Civitillo">Giovanna Civitillo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giovanni Carretti" name="guest_star" value="Giovanni Carretti" {% if 'Giovanni Carretti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giovanni Carretti">Giovanni Carretti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giovanni Franzoni" name="guest_star" value="Giovanni Franzoni" {% if 'Giovanni Franzoni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giovanni Franzoni">Giovanni Franzoni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giovanni Sanicola" name="guest_star" value="Giovanni Sanicola" {% if 'Giovanni Sanicola' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giovanni Sanicola">Giovanni Sanicola</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giovanni Santoro" name="guest_star" value="Giovanni Santoro" {% if 'Giovanni Santoro' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giovanni Santoro">Giovanni Santoro</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giovanni Tomassetti" name="guest_star" value="Giovanni Tomassetti" {% if 'Giovanni Tomassetti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giovanni Tomassetti">Giovanni Tomassetti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giovanni Tommassetti" name="guest_star" value="Giovanni Tommassetti" {% if 'Giovanni Tommassetti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giovanni Tommassetti">Giovanni Tommassetti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giuseppe Cruciani" name="guest_star" value="Giuseppe Cruciani" {% if 'Giuseppe Cruciani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giuseppe Cruciani">Giuseppe Cruciani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giuseppe Loconsole" name="guest_star" value="Giuseppe Loconsole" {% if 'Giuseppe Loconsole' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giuseppe Loconsole">Giuseppe Loconsole</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giuseppe Lorusso" name="guest_star" value="Giuseppe Lorusso" {% if 'Giuseppe Lorusso' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giuseppe Lorusso">Giuseppe Lorusso</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Giusto Lo Piparo" name="guest_star" value="Giusto Lo Piparo" {% if 'Giusto Lo Piparo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Giusto Lo Piparo">Giusto Lo Piparo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Grazia Migneco" name="guest_star" value="Grazia Migneco" {% if 'Grazia Migneco' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Grazia Migneco">Grazia Migneco</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gualberto Parmeggiani" name="guest_star" value="Gualberto Parmeggiani" {% if 'Gualberto Parmeggiani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gualberto Parmeggiani">Gualberto Parmeggiani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gualtiero Burzi" name="guest_star" value="Gualtiero Burzi" {% if 'Gualtiero Burzi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gualtiero Burzi">Gualtiero Burzi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Guglielmo Menconi" name="guest_star" value="Guglielmo Menconi" {% if 'Guglielmo Menconi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Guglielmo Menconi">Guglielmo Menconi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Guido Andreoni" name="guest_star" value="Guido Andreoni" {% if 'Guido Andreoni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Guido Andreoni">Guido Andreoni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Guido Laurini" name="guest_star" value="Guido Laurini" {% if 'Guido Laurini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Guido Laurini">Guido Laurini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Guido Rutta" name="guest_star" value="Guido Rutta" {% if 'Guido Rutta' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Guido Rutta">Guido Rutta</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Gérard Chaillou" name="guest_star" value="Gérard Chaillou" {% if 'Gérard Chaillou' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Gérard Chaillou">Gérard Chaillou</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Herbert Pacton" name="guest_star" value="Herbert Pacton" {% if 'Herbert Pacton' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Herbert Pacton">Herbert Pacton</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Hiroshi Sakai" name="guest_star" value="Hiroshi Sakai" {% if 'Hiroshi Sakai' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Hiroshi Sakai">Hiroshi Sakai</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Hubert Stergacic" name="guest_star" value="Hubert Stergacic" {% if 'Hubert Stergacic' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Hubert Stergacic">Hubert Stergacic</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="I Pooh" name="guest_star" value="I Pooh" {% if 'I Pooh' in guest_stars_selected %}checked{% endif %}>
+                        <label for="I Pooh">I Pooh</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Igor Loddo" name="guest_star" value="Igor Loddo" {% if 'Igor Loddo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Igor Loddo">Igor Loddo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Ilaria Spada" name="guest_star" value="Ilaria Spada" {% if 'Ilaria Spada' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Ilaria Spada">Ilaria Spada</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Isa Gallinelli" name="guest_star" value="Isa Gallinelli" {% if 'Isa Gallinelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Isa Gallinelli">Isa Gallinelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Iuliana Ierugan" name="guest_star" value="Iuliana Ierugan" {% if 'Iuliana Ierugan' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Iuliana Ierugan">Iuliana Ierugan</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Ivan Perna" name="guest_star" value="Ivan Perna" {% if 'Ivan Perna' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Ivan Perna">Ivan Perna</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Jacopo Costantini" name="guest_star" value="Jacopo Costantini" {% if 'Jacopo Costantini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Jacopo Costantini">Jacopo Costantini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Jessica Polsky" name="guest_star" value="Jessica Polsky" {% if 'Jessica Polsky' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Jessica Polsky">Jessica Polsky</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Jeva Garkalne" name="guest_star" value="Jeva Garkalne" {% if 'Jeva Garkalne' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Jeva Garkalne">Jeva Garkalne</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Josè Leibanti" name="guest_star" value="Josè Leibanti" {% if 'Josè Leibanti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Josè Leibanti">Josè Leibanti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Klara Bartovae" name="guest_star" value="Klara Bartovae" {% if 'Klara Bartovae' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Klara Bartovae">Klara Bartovae</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Laura Forgia" name="guest_star" value="Laura Forgia" {% if 'Laura Forgia' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Laura Forgia">Laura Forgia</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Laura Locatelli" name="guest_star" value="Laura Locatelli" {% if 'Laura Locatelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Laura Locatelli">Laura Locatelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Laura Pestellini" name="guest_star" value="Laura Pestellini" {% if 'Laura Pestellini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Laura Pestellini">Laura Pestellini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Leda Celani" name="guest_star" value="Leda Celani" {% if 'Leda Celani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Leda Celani">Leda Celani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Leonardo Lapomarda" name="guest_star" value="Leonardo Lapomarda" {% if 'Leonardo Lapomarda' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Leonardo Lapomarda">Leonardo Lapomarda</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Liliana Feldmann" name="guest_star" value="Liliana Feldmann" {% if 'Liliana Feldmann' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Liliana Feldmann">Liliana Feldmann</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Linda Messerklinger" name="guest_star" value="Linda Messerklinger" {% if 'Linda Messerklinger' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Linda Messerklinger">Linda Messerklinger</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Lorenzo De Marinis" name="guest_star" value="Lorenzo De Marinis" {% if 'Lorenzo De Marinis' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Lorenzo De Marinis">Lorenzo De Marinis</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Los Caribenos" name="guest_star" value="Los Caribenos" {% if 'Los Caribenos' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Los Caribenos">Los Caribenos</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Luca Di Prospero" name="guest_star" value="Luca Di Prospero" {% if 'Luca Di Prospero' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Luca Di Prospero">Luca Di Prospero</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Luca Ferrario" name="guest_star" value="Luca Ferrario" {% if 'Luca Ferrario' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Luca Ferrario">Luca Ferrario</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Luciana Littizzetto" name="guest_star" value="Luciana Littizzetto" {% if 'Luciana Littizzetto' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Luciana Littizzetto">Luciana Littizzetto</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Lucilla Agosti" name="guest_star" value="Lucilla Agosti" {% if 'Lucilla Agosti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Lucilla Agosti">Lucilla Agosti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Luigi Maria Burruano" name="guest_star" value="Luigi Maria Burruano" {% if 'Luigi Maria Burruano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Luigi Maria Burruano">Luigi Maria Burruano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Maddalena Corvaglia" name="guest_star" value="Maddalena Corvaglia" {% if 'Maddalena Corvaglia' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Maddalena Corvaglia">Maddalena Corvaglia</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Maddalena Trani" name="guest_star" value="Maddalena Trani" {% if 'Maddalena Trani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Maddalena Trani">Maddalena Trani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Magda Gomes" name="guest_star" value="Magda Gomes" {% if 'Magda Gomes' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Magda Gomes">Magda Gomes</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Manuela Currau" name="guest_star" value="Manuela Currau" {% if 'Manuela Currau' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Manuela Currau">Manuela Currau</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Berry" name="guest_star" value="Marco Berry" {% if 'Marco Berry' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Berry">Marco Berry</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Cacciola" name="guest_star" value="Marco Cacciola" {% if 'Marco Cacciola' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Cacciola">Marco Cacciola</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Chiappa" name="guest_star" value="Marco Chiappa" {% if 'Marco Chiappa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Chiappa">Marco Chiappa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Chiesa" name="guest_star" value="Marco Chiesa" {% if 'Marco Chiesa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Chiesa">Marco Chiesa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Cortesi" name="guest_star" value="Marco Cortesi" {% if 'Marco Cortesi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Cortesi">Marco Cortesi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco De Giorgi" name="guest_star" value="Marco De Giorgi" {% if 'Marco De Giorgi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco De Giorgi">Marco De Giorgi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Filatori" name="guest_star" value="Marco Filatori" {% if 'Marco Filatori' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Filatori">Marco Filatori</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Fubini" name="guest_star" value="Marco Fubini" {% if 'Marco Fubini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Fubini">Marco Fubini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Ghirlandi" name="guest_star" value="Marco Ghirlandi" {% if 'Marco Ghirlandi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Ghirlandi">Marco Ghirlandi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Mainini" name="guest_star" value="Marco Mainini" {% if 'Marco Mainini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Mainini">Marco Mainini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Mangani" name="guest_star" value="Marco Mangani" {% if 'Marco Mangani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Mangani">Marco Mangani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Merli" name="guest_star" value="Marco Merli" {% if 'Marco Merli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Merli">Marco Merli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Merlini" name="guest_star" value="Marco Merlini" {% if 'Marco Merlini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Merlini">Marco Merlini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Messeri" name="guest_star" value="Marco Messeri" {% if 'Marco Messeri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Messeri">Marco Messeri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Minetti" name="guest_star" value="Marco Minetti" {% if 'Marco Minetti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Minetti">Marco Minetti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Morellini" name="guest_star" value="Marco Morellini" {% if 'Marco Morellini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Morellini">Marco Morellini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Pieralisi" name="guest_star" value="Marco Pieralisi" {% if 'Marco Pieralisi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Pieralisi">Marco Pieralisi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Rizzo" name="guest_star" value="Marco Rizzo" {% if 'Marco Rizzo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Rizzo">Marco Rizzo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marco Simeoli" name="guest_star" value="Marco Simeoli" {% if 'Marco Simeoli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marco Simeoli">Marco Simeoli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Maria Eugenia D'Aquino" name="guest_star" value="Maria Eugenia D'Aquino" {% if "Maria Eugenia D'Aquino" in guest_stars_selected %}checked{% endif %}>
+                        <label for="Maria Eugenia D'Aquino">Maria Eugenia D'Aquino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marica Coco" name="guest_star" value="Marica Coco" {% if 'Marica Coco' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marica Coco">Marica Coco</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marija Milutinovic" name="guest_star" value="Marija Milutinovic" {% if 'Marija Milutinovic' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marija Milutinovic">Marija Milutinovic</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Mario Biondi" name="guest_star" value="Mario Biondi" {% if 'Mario Biondi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Mario Biondi">Mario Biondi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Mario Ermito" name="guest_star" value="Mario Ermito" {% if 'Mario Ermito' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Mario Ermito">Mario Ermito</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Mario Pietramala" name="guest_star" value="Mario Pietramala" {% if 'Mario Pietramala' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Mario Pietramala">Mario Pietramala</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Mario Pirrello" name="guest_star" value="Mario Pirrello" {% if 'Mario Pirrello' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Mario Pirrello">Mario Pirrello</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Mario Zucca" name="guest_star" value="Mario Zucca" {% if 'Mario Zucca' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Mario Zucca">Mario Zucca</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Marta Favro - Caroline Sanchez" name="guest_star" value="Marta Favro - Caroline Sanchez" {% if 'Marta Favro - Caroline Sanchez' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Marta Favro - Caroline Sanchez">Marta Favro - Caroline Sanchez</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Martina Colombari" name="guest_star" value="Martina Colombari" {% if 'Martina Colombari' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Martina Colombari">Martina Colombari</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Maruska Albertazzi" name="guest_star" value="Maruska Albertazzi" {% if 'Maruska Albertazzi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Maruska Albertazzi">Maruska Albertazzi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimiliano Loizzi" name="guest_star" value="Massimiliano Loizzi" {% if 'Massimiliano Loizzi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimiliano Loizzi">Massimiliano Loizzi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimiliano Varrese" name="guest_star" value="Massimiliano Varrese" {% if 'Massimiliano Varrese' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimiliano Varrese">Massimiliano Varrese</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimiliano Zanellati" name="guest_star" value="Massimiliano Zanellati" {% if 'Massimiliano Zanellati' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimiliano Zanellati">Massimiliano Zanellati</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Boldi" name="guest_star" value="Massimo Boldi" {% if 'Massimo Boldi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Boldi">Massimo Boldi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Cagnina" name="guest_star" value="Massimo Cagnina" {% if 'Massimo Cagnina' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Cagnina">Massimo Cagnina</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Corengia" name="guest_star" value="Massimo Corengia" {% if 'Massimo Corengia' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Corengia">Massimo Corengia</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Malagugini" name="guest_star" value="Massimo Malagugini" {% if 'Massimo Malagugini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Malagugini">Massimo Malagugini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Mirani" name="guest_star" value="Massimo Mirani" {% if 'Massimo Mirani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Mirani">Massimo Mirani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Muntoni" name="guest_star" value="Massimo Muntoni" {% if 'Massimo Muntoni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Muntoni">Massimo Muntoni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Panizzari" name="guest_star" value="Massimo Panizzari" {% if 'Massimo Panizzari' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Panizzari">Massimo Panizzari</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Poggio" name="guest_star" value="Massimo Poggio" {% if 'Massimo Poggio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Poggio">Massimo Poggio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Ranieri" name="guest_star" value="Massimo Ranieri" {% if 'Massimo Ranieri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Ranieri">Massimo Ranieri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Sabet" name="guest_star" value="Massimo Sabet" {% if 'Massimo Sabet' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Sabet">Massimo Sabet</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Massimo Tomassoni" name="guest_star" value="Massimo Tomassoni" {% if 'Massimo Tomassoni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Massimo Tomassoni">Massimo Tomassoni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Matt Patresi" name="guest_star" value="Matt Patresi" {% if 'Matt Patresi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Matt Patresi">Matt Patresi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Matteo Alfonso" name="guest_star" value="Matteo Alfonso" {% if 'Matteo Alfonso' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Matteo Alfonso">Matteo Alfonso</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Matteo Barbè" name="guest_star" value="Matteo Barbè" {% if 'Matteo Barbè' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Matteo Barbè">Matteo Barbè</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Matteo Caremoli" name="guest_star" value="Matteo Caremoli" {% if 'Matteo Caremoli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Matteo Caremoli">Matteo Caremoli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Matteo De Micheli" name="guest_star" value="Matteo De Micheli" {% if 'Matteo De Micheli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Matteo De Micheli">Matteo De Micheli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Matteo Demicheli" name="guest_star" value="Matteo Demicheli" {% if 'Matteo Demicheli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Matteo Demicheli">Matteo Demicheli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Matteo Levati" name="guest_star" value="Matteo Levati" {% if 'Matteo Levati' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Matteo Levati">Matteo Levati</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Maurizio Lastrico" name="guest_star" value="Maurizio Lastrico" {% if 'Maurizio Lastrico' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Maurizio Lastrico">Maurizio Lastrico</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Maurizio Tabani" name="guest_star" value="Maurizio Tabani" {% if 'Maurizio Tabani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Maurizio Tabani">Maurizio Tabani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Max Bertolani" name="guest_star" value="Max Bertolani" {% if 'Max Bertolani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Max Bertolani">Max Bertolani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michel Altieri" name="guest_star" value="Michel Altieri" {% if 'Michel Altieri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michel Altieri">Michel Altieri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michela Coppa" name="guest_star" value="Michela Coppa" {% if 'Michela Coppa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michela Coppa">Michela Coppa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michela Ottolini" name="guest_star" value="Michela Ottolini" {% if 'Michela Ottolini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michela Ottolini">Michela Ottolini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michela Quattrociocche" name="guest_star" value="Michela Quattrociocche" {% if 'Michela Quattrociocche' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michela Quattrociocche">Michela Quattrociocche</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michelangelo Pulci" name="guest_star" value="Michelangelo Pulci" {% if 'Michelangelo Pulci' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michelangelo Pulci">Michelangelo Pulci</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michele Alhaique" name="guest_star" value="Michele Alhaique" {% if 'Michele Alhaique' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michele Alhaique">Michele Alhaique</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michele Atieri" name="guest_star" value="Michele Atieri" {% if 'Michele Atieri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michele Atieri">Michele Atieri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michele Bottini" name="guest_star" value="Michele Bottini" {% if 'Michele Bottini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michele Bottini">Michele Bottini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michele Cesari" name="guest_star" value="Michele Cesari" {% if 'Michele Cesari' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michele Cesari">Michele Cesari</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michele Mainardi" name="guest_star" value="Michele Mainardi" {% if 'Michele Mainardi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michele Mainardi">Michele Mainardi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Michele Radice" name="guest_star" value="Michele Radice" {% if 'Michele Radice' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Michele Radice">Michele Radice</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Micol Azzurro" name="guest_star" value="Micol Azzurro" {% if 'Micol Azzurro' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Micol Azzurro">Micol Azzurro</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Mimmo Chianese" name="guest_star" value="Mimmo Chianese" {% if 'Mimmo Chianese' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Mimmo Chianese">Mimmo Chianese</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Mino Manni" name="guest_star" value="Mino Manni" {% if 'Mino Manni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Mino Manni">Mino Manni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Miriam Leone" name="guest_star" value="Miriam Leone" {% if 'Miriam Leone' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Miriam Leone">Miriam Leone</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Modou Gueye" name="guest_star" value="Modou Gueye" {% if 'Modou Gueye' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Modou Gueye">Modou Gueye</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Monica Dugo" name="guest_star" value="Monica Dugo" {% if 'Monica Dugo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Monica Dugo">Monica Dugo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Morena Salvino" name="guest_star" value="Morena Salvino" {% if 'Morena Salvino' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Morena Salvino">Morena Salvino</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Nanni Tormen" name="guest_star" value="Nanni Tormen" {% if 'Nanni Tormen' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Nanni Tormen">Nanni Tormen</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Natale Ciravolo" name="guest_star" value="Natale Ciravolo" {% if 'Natale Ciravolo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Natale Ciravolo">Natale Ciravolo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Natasha Stefanenko" name="guest_star" value="Natasha Stefanenko" {% if 'Natasha Stefanenko' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Natasha Stefanenko">Natasha Stefanenko</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Nicola Stravalaci" name="guest_star" value="Nicola Stravalaci" {% if 'Nicola Stravalaci' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Nicola Stravalaci">Nicola Stravalaci</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Nina Seničar" name="guest_star" value="Nina Seničar" {% if 'Nina Seničar' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Nina Seničar">Nina Seničar</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Ninni Bruschetta" name="guest_star" value="Ninni Bruschetta" {% if 'Ninni Bruschetta' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Ninni Bruschetta">Ninni Bruschetta</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Nino Demonteverde" name="guest_star" value="Nino Demonteverde" {% if 'Nino Demonteverde' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Nino Demonteverde">Nino Demonteverde</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Nora Amile" name="guest_star" value="Nora Amile" {% if 'Nora Amile' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Nora Amile">Nora Amile</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Obafemi Martins" name="guest_star" value="Obafemi Martins" {% if 'Obafemi Martins' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Obafemi Martins">Obafemi Martins</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Olivier Elouti Wangue" name="guest_star" value="Olivier Elouti Wangue" {% if 'Olivier Elouti Wangue' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Olivier Elouti Wangue">Olivier Elouti Wangue</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Oliviero Toscani" name="guest_star" value="Oliviero Toscani" {% if 'Oliviero Toscani' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Oliviero Toscani">Oliviero Toscani</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Omar Pirovano" name="guest_star" value="Omar Pirovano" {% if 'Omar Pirovano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Omar Pirovano">Omar Pirovano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Osvaldo Salomone" name="guest_star" value="Osvaldo Salomone" {% if 'Osvaldo Salomone' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Osvaldo Salomone">Osvaldo Salomone</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Ottavia Lanza" name="guest_star" value="Ottavia Lanza" {% if 'Ottavia Lanza' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Ottavia Lanza">Ottavia Lanza</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Paco Carlotto" name="guest_star" value="Paco Carlotto" {% if 'Paco Carlotto' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Paco Carlotto">Paco Carlotto</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Paco Carlucci" name="guest_star" value="Paco Carlucci" {% if 'Paco Carlucci' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Paco Carlucci">Paco Carlucci</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Paola Minaccioni" name="guest_star" value="Paola Minaccioni" {% if 'Paola Minaccioni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Paola Minaccioni">Paola Minaccioni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Paolo Mazzarelli" name="guest_star" value="Paolo Mazzarelli" {% if 'Paolo Mazzarelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Paolo Mazzarelli">Paolo Mazzarelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Paolo Pierobon" name="guest_star" value="Paolo Pierobon" {% if 'Paolo Pierobon' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Paolo Pierobon">Paolo Pierobon</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Paolo Sesana" name="guest_star" value="Paolo Sesana" {% if 'Paolo Sesana' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Paolo Sesana">Paolo Sesana</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Pasquale Di Filippo" name="guest_star" value="Pasquale Di Filippo" {% if 'Pasquale Di Filippo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Pasquale Di Filippo">Pasquale Di Filippo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Patrizia Mottola" name="guest_star" value="Patrizia Mottola" {% if 'Patrizia Mottola' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Patrizia Mottola">Patrizia Mottola</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Patti Garofalo" name="guest_star" value="Patti Garofalo" {% if 'Patti Garofalo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Patti Garofalo">Patti Garofalo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Pedro Sarubbi" name="guest_star" value="Pedro Sarubbi" {% if 'Pedro Sarubbi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Pedro Sarubbi">Pedro Sarubbi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Peppe Bosone" name="guest_star" value="Peppe Bosone" {% if 'Peppe Bosone' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Peppe Bosone">Peppe Bosone</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Petra Khruz" name="guest_star" value="Petra Khruz" {% if 'Petra Khruz' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Petra Khruz">Petra Khruz</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Piero Lenardon" name="guest_star" value="Piero Lenardon" {% if 'Piero Lenardon' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Piero Lenardon">Piero Lenardon</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Piero Maggiò" name="guest_star" value="Piero Maggiò" {% if 'Piero Maggiò' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Piero Maggiò">Piero Maggiò</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Pierpaolo Franzon" name="guest_star" value="Pierpaolo Franzon" {% if 'Pierpaolo Franzon' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Pierpaolo Franzon">Pierpaolo Franzon</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Piersandro Freglio" name="guest_star" value="Piersandro Freglio" {% if 'Piersandro Freglio' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Piersandro Freglio">Piersandro Freglio</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Pietro Alessandri" name="guest_star" value="Pietro Alessandri" {% if 'Pietro Alessandri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Pietro Alessandri">Pietro Alessandri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Pietro Pignatelli" name="guest_star" value="Pietro Pignatelli" {% if 'Pietro Pignatelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Pietro Pignatelli">Pietro Pignatelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Pino Pirovano" name="guest_star" value="Pino Pirovano" {% if 'Pino Pirovano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Pino Pirovano">Pino Pirovano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Pooh" name="guest_star" value="Pooh" {% if 'Pooh' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Pooh">Pooh</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Raffaele Fallica" name="guest_star" value="Raffaele Fallica" {% if 'Raffaele Fallica' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Raffaele Fallica">Raffaele Fallica</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Raffaele Gangale" name="guest_star" value="Raffaele Gangale" {% if 'Raffaele Gangale' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Raffaele Gangale">Raffaele Gangale</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Raz Degan" name="guest_star" value="Raz Degan" {% if 'Raz Degan' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Raz Degan">Raz Degan</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Renato Soriano" name="guest_star" value="Renato Soriano" {% if 'Renato Soriano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Renato Soriano">Renato Soriano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Riccardo Festa" name="guest_star" value="Riccardo Festa" {% if 'Riccardo Festa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Riccardo Festa">Riccardo Festa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Riccardo Fogli" name="guest_star" value="Riccardo Fogli" {% if 'Riccardo Fogli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Riccardo Fogli">Riccardo Fogli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Roberta Rovelli" name="guest_star" value="Roberta Rovelli" {% if 'Roberta Rovelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Roberta Rovelli">Roberta Rovelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Roberto Accornero" name="guest_star" value="Roberto Accornero" {% if 'Roberto Accornero' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Roberto Accornero">Roberto Accornero</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Roberto Da Crema" name="guest_star" value="Roberto Da Crema" {% if 'Roberto Da Crema' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Roberto Da Crema">Roberto Da Crema</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Roberto De Sano" name="guest_star" value="Roberto De Sano" {% if 'Roberto De Sano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Roberto De Sano">Roberto De Sano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Roberto Messini" name="guest_star" value="Roberto Messini" {% if 'Roberto Messini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Roberto Messini">Roberto Messini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Roberto Vandelli" name="guest_star" value="Roberto Vandelli" {% if 'Roberto Vandelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Roberto Vandelli">Roberto Vandelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Roby Facchinetti" name="guest_star" value="Roby Facchinetti" {% if 'Roby Facchinetti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Roby Facchinetti">Roby Facchinetti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Roland Litrico" name="guest_star" value="Roland Litrico" {% if 'Roland Litrico' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Roland Litrico">Roland Litrico</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Rosanna Cancellieri" name="guest_star" value="Rosanna Cancellieri" {% if 'Rosanna Cancellieri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Rosanna Cancellieri">Rosanna Cancellieri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Rosario Lisma" name="guest_star" value="Rosario Lisma" {% if 'Rosario Lisma' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Rosario Lisma">Rosario Lisma</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Sacha Oliviero" name="guest_star" value="Sacha Oliviero" {% if 'Sacha Oliviero' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Sacha Oliviero">Sacha Oliviero</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Salvatore Rizzo" name="guest_star" value="Salvatore Rizzo" {% if 'Salvatore Rizzo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Salvatore Rizzo">Salvatore Rizzo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Salvatore Rodia" name="guest_star" value="Salvatore Rodia" {% if 'Salvatore Rodia' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Salvatore Rodia">Salvatore Rodia</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Sara Bellodi" name="guest_star" value="Sara Bellodi" {% if 'Sara Bellodi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Sara Bellodi">Sara Bellodi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Sax Nicosia" name="guest_star" value="Sax Nicosia" {% if 'Sax Nicosia' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Sax Nicosia">Sax Nicosia</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Sebastiano Rizzo" name="guest_star" value="Sebastiano Rizzo" {% if 'Sebastiano Rizzo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Sebastiano Rizzo">Sebastiano Rizzo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Sergio Meogrossi" name="guest_star" value="Sergio Meogrossi" {% if 'Sergio Meogrossi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Sergio Meogrossi">Sergio Meogrossi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Shigeki Maruyama" name="guest_star" value="Shigeki Maruyama" {% if 'Shigeki Maruyama' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Shigeki Maruyama">Shigeki Maruyama</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Silvia Ferretti" name="guest_star" value="Silvia Ferretti" {% if 'Silvia Ferretti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Silvia Ferretti">Silvia Ferretti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Silvia Giordano" name="guest_star" value="Silvia Giordano" {% if 'Silvia Giordano' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Silvia Giordano">Silvia Giordano</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Silvia Manzoni" name="guest_star" value="Silvia Manzoni" {% if 'Silvia Manzoni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Silvia Manzoni">Silvia Manzoni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Silvia Paonessa" name="guest_star" value="Silvia Paonessa" {% if 'Silvia Paonessa' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Silvia Paonessa">Silvia Paonessa</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Simona Borioni" name="guest_star" value="Simona Borioni" {% if 'Simona Borioni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Simona Borioni">Simona Borioni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Simona Marchini" name="guest_star" value="Simona Marchini" {% if 'Simona Marchini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Simona Marchini">Simona Marchini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Simone Borrelli" name="guest_star" value="Simone Borrelli" {% if 'Simone Borrelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Simone Borrelli">Simone Borrelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Simone Buzzi" name="guest_star" value="Simone Buzzi" {% if 'Simone Buzzi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Simone Buzzi">Simone Buzzi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Simone Gerace" name="guest_star" value="Simone Gerace" {% if 'Simone Gerace' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Simone Gerace">Simone Gerace</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Simone Repetto" name="guest_star" value="Simone Repetto" {% if 'Simone Repetto' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Simone Repetto">Simone Repetto</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Simone Ricciardi" name="guest_star" value="Simone Ricciardi" {% if 'Simone Ricciardi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Simone Ricciardi">Simone Ricciardi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Soria Monica Velasco" name="guest_star" value="Soria Monica Velasco" {% if 'Soria Monica Velasco' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Soria Monica Velasco">Soria Monica Velasco</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Stefano Annoni" name="guest_star" value="Stefano Annoni" {% if 'Stefano Annoni' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Stefano Annoni">Stefano Annoni</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Stefano Narsini" name="guest_star" value="Stefano Narsini" {% if 'Stefano Narsini' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Stefano Narsini">Stefano Narsini</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Stefano Saccotelli" name="guest_star" value="Stefano Saccotelli" {% if 'Stefano Saccotelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Stefano Saccotelli">Stefano Saccotelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Sung Un Cho" name="guest_star" value="Sung Un Cho" {% if 'Sung Un Cho' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Sung Un Cho">Sung Un Cho</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Susy Laude" name="guest_star" value="Susy Laude" {% if 'Susy Laude' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Susy Laude">Susy Laude</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Syria" name="guest_star" value="Syria" {% if 'Syria' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Syria">Syria</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Tatiana Lepore" name="guest_star" value="Tatiana Lepore" {% if 'Tatiana Lepore' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Tatiana Lepore">Tatiana Lepore</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Teo Guadalupi" name="guest_star" value="Teo Guadalupi" {% if 'Teo Guadalupi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Teo Guadalupi">Teo Guadalupi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Tiziana Lambo" name="guest_star" value="Tiziana Lambo" {% if 'Tiziana Lambo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Tiziana Lambo">Tiziana Lambo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Tomohiko Tasaka" name="guest_star" value="Tomohiko Tasaka" {% if 'Tomohiko Tasaka' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Tomohiko Tasaka">Tomohiko Tasaka</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Toni Pandolfo" name="guest_star" value="Toni Pandolfo" {% if 'Toni Pandolfo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Toni Pandolfo">Toni Pandolfo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Tony Rucco" name="guest_star" value="Tony Rucco" {% if 'Tony Rucco' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Tony Rucco">Tony Rucco</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Tyler White" name="guest_star" value="Tyler White" {% if 'Tyler White' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Tyler White">Tyler White</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Uberto Kovacevich" name="guest_star" value="Uberto Kovacevich" {% if 'Uberto Kovacevich' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Uberto Kovacevich">Uberto Kovacevich</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Ugo Dighero" name="guest_star" value="Ugo Dighero" {% if 'Ugo Dighero' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Ugo Dighero">Ugo Dighero</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Umberto Folliero" name="guest_star" value="Umberto Folliero" {% if 'Umberto Folliero' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Umberto Folliero">Umberto Folliero</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Umberto Noto" name="guest_star" value="Umberto Noto" {% if 'Umberto Noto' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Umberto Noto">Umberto Noto</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Valentina Materiale" name="guest_star" value="Valentina Materiale" {% if 'Valentina Materiale' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Valentina Materiale">Valentina Materiale</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Valentina Melis" name="guest_star" value="Valentina Melis" {% if 'Valentina Melis' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Valentina Melis">Valentina Melis</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Valeria Girelli" name="guest_star" value="Valeria Girelli" {% if 'Valeria Girelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Valeria Girelli">Valeria Girelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Valerio De Feudis" name="guest_star" value="Valerio De Feudis" {% if 'Valerio De Feudis' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Valerio De Feudis">Valerio De Feudis</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Valerio Staffelli" name="guest_star" value="Valerio Staffelli" {% if 'Valerio Staffelli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Valerio Staffelli">Valerio Staffelli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Vanessa Galipoli" name="guest_star" value="Vanessa Galipoli" {% if 'Vanessa Galipoli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Vanessa Galipoli">Vanessa Galipoli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Vanessa Marcandella" name="guest_star" value="Vanessa Marcandella" {% if 'Vanessa Marcandella' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Vanessa Marcandella">Vanessa Marcandella</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Veronica Franzosi" name="guest_star" value="Veronica Franzosi" {% if 'Veronica Franzosi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Veronica Franzosi">Veronica Franzosi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Veronika Logan" name="guest_star" value="Veronika Logan" {% if 'Veronika Logan' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Veronika Logan">Veronika Logan</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Vito" name="guest_star" value="Vito" {% if 'Vito' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Vito">Vito</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Vittorio Boscolo" name="guest_star" value="Vittorio Boscolo" {% if 'Vittorio Boscolo' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Vittorio Boscolo">Vittorio Boscolo</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Vittorio Vaccaro" name="guest_star" value="Vittorio Vaccaro" {% if 'Vittorio Vaccaro' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Vittorio Vaccaro">Vittorio Vaccaro</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="William Angiuli" name="guest_star" value="William Angiuli" {% if 'William Angiuli' in guest_stars_selected %}checked{% endif %}>
+                        <label for="William Angiuli">William Angiuli</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Woody Neri" name="guest_star" value="Woody Neri" {% if 'Woody Neri' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Woody Neri">Woody Neri</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Yang Shi" name="guest_star" value="Yang Shi" {% if 'Yang Shi' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Yang Shi">Yang Shi</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Yoon Cometti" name="guest_star" value="Yoon Cometti" {% if 'Yoon Cometti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Yoon Cometti">Yoon Cometti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Yoon Cometti Joyce" name="guest_star" value="Yoon Cometti Joyce" {% if 'Yoon Cometti Joyce' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Yoon Cometti Joyce">Yoon Cometti Joyce</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Yoon Joice Cometti" name="guest_star" value="Yoon Joice Cometti" {% if 'Yoon Joice Cometti' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Yoon Joice Cometti">Yoon Joice Cometti</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Yvan Le Bolloc'h" name="guest_star" value="Yvan Le Bolloc'h" {% if "Yvan Le Bolloc'h" in guest_stars_selected %}checked{% endif %}>
+                        <label for="Yvan Le Bolloc'h">Yvan Le Bolloc'h</label>
+                        </div>
+
+                        <div class="checkbox-item">
+                        <input type="checkbox" id="Yvette Jordan" name="guest_star" value="Yvette Jordan" {% if 'Yvette Jordan' in guest_stars_selected %}checked{% endif %}>
+                        <label for="Yvette Jordan">Yvette Jordan</label>
+                        </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Right Column for Last Three Filters -->
+                    <div class="right-column">
+                        <!-- Characters Filter -->
+                        <h6>Seleziona i personaggi:</h6>
+                        <input type="text" id="characterSearch" class="form-control mb-3" placeholder="Cerca tra i personaggi">
+                        <div class="scroll-container" id="charactersList">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Alex" name="character" value="Alex" {% if 'Alex' in characters_selected %}checked{% endif %}>
+                                <label for="character_Alex">Alex</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Andrea" name="character" value="Andrea" {% if 'Andrea' in characters_selected %}checked{% endif %}>
+                                <label for="character_Andrea">Andrea</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Anna" name="character" value="Anna" {% if 'Anna' in characters_selected %}checked{% endif %}>
+                                <label for="character_Anna">Anna</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Anselmo" name="character" value="Anselmo"{% if 'Anselmo' in characters_selected %}checked{% endif %}>
+                                <label for="character_Anselmo">Anselmo</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Brad" name="character" value="Brad"{% if 'Brad' in characters_selected %}checked{% endif %}>
+                                <label for="character_Brad">Brad</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Carminati" name="character" value="Carminati"{% if 'Carminati' in characters_selected %}checked{% endif %}>
+                                <label for="character_Carminati">Carminati</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Caterina" name="character" value="Caterina"{% if 'Caterina' in characters_selected %}checked{% endif %}>
+                                <label for="character_Caterina">Caterina</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_De_Marinis" name="character" value="De Marinis"{% if 'De Marinis' in characters_selected %}checked{% endif %}>
+                                <label for="character_De_Marinis">De Marinis</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Emma" name="character" value="Emma"{% if 'Emma' in characters_selected %}checked{% endif %}>
+                                <label for="character_Emma">Emma</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Gaia" name="character" value="Gaia"{% if 'Gaia' in characters_selected %}checked{% endif %}>
+                                <label for="character_Gaia">Gaia</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Geller" name="character" value="Geller"{% if 'Geller' in characters_selected %}checked{% endif %}>
+                                <label for="character_Geller">Geller</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Giovanna" name="character" value="Giovanna"{% if 'Giovanna' in characters_selected %}checked{% endif %}>
+                                <label for="character_Giovanna">Giovanna</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Gloria" name="character" value="Gloria"{% if 'Gloria' in characters_selected %}checked{% endif %}>
+                                <label for="character_Gloria">Gloria</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Ilaria" name="character" value="Ilaria"{% if 'Ilaria' in characters_selected %}checked{% endif %}>
+                                <label for="character_Ilaria">Ilaria</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Jessica" name="character" value="Jessica"{% if 'Jessica' in characters_selected %}checked{% endif %}>
+                                <label for="character_Jessica">Jessica</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Jonathan" name="character" value="Jonathan"{% if 'Jonathan' in characters_selected %}checked{% endif %}>
+                                <label for="character_Jonathan">Jonathan</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Lello" name="character" value="Lello"{% if 'Lello' in characters_selected %}checked{% endif %}>
+                                <label for="character_Lello">Lello</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Luca" name="character" value="Luca"{% if 'Luca' in characters_selected %}checked{% endif %}>
+                                <label for="character_Luca">Luca</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Lucrezia" name="character" value="Lucrezia"{% if 'Lucrezia' in characters_selected %}checked{% endif %}>
+                                <label for="character_Lucrezia">Lucrezia</label>
+                            </div>
+                           <!--     <div class="checkbox-item">
+                           <input type="checkbox" id="character_Mamma_di_Silvano" name="character" value="Mamma di Silvano"{% if 'Mamma di Silvano' in characters_selected %}checked{% endif %}>
+                                <label for="character_Mamma_di_Silvano">Mamma di Silvano</label>
+                            </div>--> 
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Maria_Eleonora" name="character" value="Maria Eleonora"{% if 'Maria Eleonora' in characters_selected %}checked{% endif %}>
+                                <label for="character_Maria_Eleonora">Maria Eleonora</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Olmo" name="character" value="Olmo"{% if 'Olmo' in characters_selected %}checked{% endif %}>
+                                <label for="character_Olmo">Olmo</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Paolo" name="character" value="Paolo"{% if 'Paolo' in characters_selected %}checked{% endif %}>
+                                <label for="character_Paolo">Paolo</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Patty" name="character" value="Patty"{% if 'Patty' in characters_selected %}checked{% endif %}>
+                                <label for="character_Patty">Patty</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Pippo" name="character" value="Pippo"{% if 'Pippo' in characters_selected %}checked{% endif %}>
+                                <label for="character_Pippo">Pippo</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Pooh" name="character" value="Pooh"{% if 'Pooh' in characters_selected %}checked{% endif %}>
+                                <label for="character_Pooh">Pooh</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Presidente" name="character" value="Presidente"{% if 'Presidente' in characters_selected %}checked{% endif %}>
+                                <label for="character_Presidente">Presidente</label>
+                            </div>
+                      <!--          <div class="checkbox-item">
+                                <input type="checkbox" id="character_Riccardo_Fogli" name="character" value="Riccardo Fogli"{% if 'Riccardo Fogli' in characters_selected %}checked{% endif %}>
+                                <label for="character_Riccardo_Fogli">Riccardo Fogli</label>
+                            </div>-->
+                           <div class="checkbox-item">
+                                <input type="checkbox" id="character_Roberto" name="character" value="Roberto"{% if 'Roberto' in characters_selected %}checked{% endif %}>
+                                <label for="character_Roberto">Roberto</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Silvano" name="character" value="Silvano"{% if 'Silvano' in characters_selected %}checked{% endif %}>
+                                <label for="character_Silvano">Silvano</label>
+                            </div>
+
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Valeria" name="character" value="Valeria"{% if 'Valeria' in characters_selected %}checked{% endif %}>
+                                <label for="character_Valeria">Valeria</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Vanda" name="character" value="Wanda"{% if 'Wanda' in characters_selected %}checked{% endif %}>
+                                <label for="character_Vanda">Wanda</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="character_Vittorio" name="character" value="Vittorio"{% if 'Vittorio' in characters_selected %}checked{% endif %}>
+                                <label for="character_Vittorio">Vittorio</label>
+                            </div>
+                        </div>
+                        <hr>
+
+                        <!-- Number of Results Filter -->
+                        <h6>Numero di Risultati:</h6>
+                        <div>
+                            <select name="num_results" id="num_results" class="form-select">
+                                <option value="1765" {% if 1765 == output_length_selected %}selected{% endif %} >Tutti i risultati</option>
+                                <option value="10" {% if 10 == output_length_selected %}selected{% endif %}>10 risultati</option>
+                                <option value="20"  {% if 20 == output_length_selected %}selected{% endif %}>20 risultati</option>
+                                <option value="50" {% if 50 == output_length_selected %}selected{% endif %}>50 risultati</option>
+                                <option value="100" {% if 100 == output_length_selected %}selected{% endif %}>100 risultati</option>
+
+                            </select>
+                        </div>
+                        <hr>
+
+                        <!-- Search Type Filter -->
+                        <h6>Ricercare su (avanzato):</h6>
+                        <div>
+                            <select name="search_type" id="search_type" class="form-select">
+                                <option value="ALL" selected {% if "ALL" == campi_ricerca_selected %}selected{% endif %} >Ricerca su titolo, trama e copione episodio</option>
+                                <option value="title_trama" {% if "title_trama" == campi_ricerca_selected %}selected{% endif %}>Ricerca su titolo episodio e trama</option>
+                            </select>
+                        </div>
+
+                        <hr>
+
+                        <!-- Tipologia di ricerca-->
+                        <h6>Modalità di ricerca (avanzato):</h6>
+                        <div>
+                            <select name="all_match_or_ranking" id="all_match_or_ranking" class="form-select">
+                               <option value="ranking_matching" {% if "ranking_matching" == all_match_or_ranking_selected %}selected{% endif %}>Ranking (Lenta più precisa)
+
+                                <option value="all_matching" {% if "all_matching" == all_match_or_ranking_selected %}selected{% endif %}>All match (Veloce meno precisa)
+                                </option>
+ 
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="close_filters"  class="btn btn-secondary"  data-bs-dismiss="modal">Chiudi</button>
+                    <button type="submit"  id="reset"   name="submit_action" value="reset"   class="btn btn-danger" >Reset Filtri</button>
+                    <button type="submit" id="submitbutton" name="submit_action" value="submit_from_filters" class="btn btn-primary">Applica Filtri</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- Include Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        // Functionality to search through guest stars and characters
+        document.getElementById('guestSearch').addEventListener('input', function() {
+            var searchQuery = this.value.toLowerCase();
+            var guestStars = document.querySelectorAll('#guestStarsList .checkbox-item');
+            guestStars.forEach(function(guestStar) {
+                var text = guestStar.querySelector('label').textContent.toLowerCase();
+                guestStar.style.display = text.includes(searchQuery) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('characterSearch').addEventListener('input', function() {
+            var searchQuery = this.value.toLowerCase();
+            var characters = document.querySelectorAll('#charactersList .checkbox-item');
+            characters.forEach(function(character) {
+                var text = character.querySelector('label').textContent.toLowerCase();
+                character.style.display = text.includes(searchQuery) ? '' : 'none';
+            });
+        });
+
+document.getElementById('reset').addEventListener('click', function() {
+
+
+    // Seleziona tutte le checkbox nel documento (input con type="checkbox")
+    var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    
+    // Cicla su tutte le checkbox e rimuovi l'attributo 'checked'
+    checkboxes.forEach(function(checkbox) {
+        checkbox.checked = false; // Deseleziona tutte le checkbox
+    });
+    
+    // Resetta anche gli altri campi di input
+    document.getElementById('guestSearch').value = '';
+    document.getElementById('characterSearch').value = '';
+    document.getElementById('num_results').value = '20';
+    document.getElementById('search_type').value = 'ALL';
+    document.getElementById('all_match_or_ranking').value = 'ranking_matching';
+
+
+
+});
+        // Trigger per cliccare il bottone "reset" dopo che la pagina si è caricata
+        window.onload = function() {
+            var resultMessage = document.getElementById("reset_message").innerHTML;
+            if (resultMessage.includes("Effettua una ricerca per vedere i risultati")) {
+                // Simula un clic sul bottone se il messaggio è presente
+                document.getElementById("filters").click();
+ 
+            }
+        };
+
+  function copyQueryToFiltersForm() {
+    var queryValue = document.getElementById('queryInput').value;  // Ottieni il valore dal primo form
+    document.getElementById('hiddenQueryInput').value = queryValue; // Copia il valore nel campo invisibile
+}
+
+    document.getElementById('filters').addEventListener('click', function() {
+        copyQueryToFiltersForm()
+    });
+
+    // Funzione per cancellare il contenuto del campo di input
+    function clearInput() {
+        // Cancella il contenuto del campo di input
+        document.getElementById('queryInput').value = '';
+    }
+
+
+    </script>
+
+
+
+</body>
+</html> 

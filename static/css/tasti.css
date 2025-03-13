@@ -1,0 +1,39 @@
+#start_research:hover, #filters:hover,#submitbutton:hover{
+   cursor: pointer;
+}
+
+#start_research, #filters, #applyFilter, #submitbutton{
+   color: white;
+   background-color: #02a783;
+   border-color: #02a783;
+}
+
+#resetFilters{
+   background-color: red;
+   border-color: red;
+   color: white;
+}
+
+.col-md-6 {
+    display: flex;
+    align-items: center; /* Allinea verticalmente gli elementi */
+}
+
+.form-control {
+    flex: 1; /* Fa sì che l'input prenda tutto lo spazio disponibile */
+}
+
+#clearInputButton {
+    height: 100%; /* Imposta l'altezza del bottone uguale all'input */
+    padding: 0 10px; /* Aggiungi un po' di spazio intorno alla "X" */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+#clearInputButton i {
+    font-size: 20px; /* Dimensione dell'icona "X" */
+}

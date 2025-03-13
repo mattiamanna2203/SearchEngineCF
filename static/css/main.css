@@ -1,0 +1,99 @@
+body {
+   background-color: antiquewhite;
+
+}
+
+.center-text {
+    text-align: center; /* Centra orizzontalmente il testo */
+}
+
+
+/* Scrollable container for guest stars and characters */
+.scroll-container {
+   max-height: 150px; /* Height limit for the scrollable area */
+   overflow-y: auto; /* Allows vertical scrolling */
+   margin-top: 10px;
+}
+
+/* Flexbox layout for the modal */
+.modal-body {
+   display: flex;
+   justify-content: space-between; /* Two columns: left and right */
+}
+
+/* Left column for the first 3 filters */
+.left-column {
+   width: 48%; /* Takes up 48% of the modal's width */
+}
+
+/* Right column for the last 3 filters */
+.right-column {
+   width: 48%; /* Takes up 48% of the modal's width */
+}
+
+/* Flexbox layout for the checkbox and label alignment */
+.checkbox-item {
+   display: flex;
+   align-items: center;
+   padding: 5px 0;
+   cursor: pointer;
+}
+
+/* Hover effect for items */
+.checkbox-item:hover {
+   background-color: #f8f9fa;
+}
+
+/* Style for the clickable checkbox labels */
+.checkbox-item label {
+   margin-left: 10px;
+   cursor: pointer;
+   flex: 1; /* Makes the label take up the remaining space */
+}
+
+/* Custom styling for the checkboxes */
+.checkbox-item input {
+   width: 25px;
+   height: 25px;
+   margin-right: 10px;
+}
+
+/* Additional styling for the modal */
+.modal-content {
+   border-radius: 8px;
+}
+
+.modal-header {
+   background-color: #007bff;
+   color: white;
+   border-top-left-radius: 8px;
+   border-top-right-radius: 8px;
+}
+
+.modal-footer {
+   border-top: 1px solid #ddd;
+}
+
+/* Styling for the search box */
+#searchInput {
+   margin-bottom: 10px;
+   font-size: 14px;
+}
+
+
+/* Per rendere la tabella con l'output dataframe una tabella con grandezza fissa e scorrimento*/
+.table-responsive {
+max-height: 450px;  /* Imposta un'altezza massima per la tabella */
+overflow-y: auto;   /* Consente lo scorrimento verticale */
+}
+/* Stile generale */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenuto principale */
+.content {
+    padding: 20px;
+}
