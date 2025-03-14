@@ -6,5 +6,3 @@ spacy
 Nltk
 Sklearn
 pyarrow
-git
-github
