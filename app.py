@@ -41,7 +41,7 @@ from SearchEngine_class import SearchEngine
 # endregion
 
 
-search_class = SearchEngine("repo/Dati")
+search_class = SearchEngine("SearchEngineCF/Dati")
 
 
 
