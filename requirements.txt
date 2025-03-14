@@ -4,5 +4,4 @@ Pandas
 Numpy
 spacy
 Nltk
-Sklearn
 pyarrow
