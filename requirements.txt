@@ -5,3 +5,4 @@ Numpy
 spacy
 Nltk
 Sklearn
+pyarrow
