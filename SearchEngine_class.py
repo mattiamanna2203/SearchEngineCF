@@ -8,7 +8,6 @@ pd.set_option('display.max_colwidth', 200)
 from  lemmatizzatore import lemmatizzazione
 import json
 import re
-from alive_progress import alive_bar
 from typing import Union, List # per specificare campi multipli nelll'input funzione
 import numpy as np
 import math
@@ -38,81 +37,70 @@ class SearchEngine:
          # Tf - Idf: Indice per capire la rilevenza di una parola in un documento, se appare raramente ogni volta che appare in un documento avrà importanza maggiore rispetto a parole che compaiono poco.
 
 
-         loop_length = 7#14
-         with alive_bar(loop_length, manual=True,force_tty=True, title="Caricamento dati: ") as bar:
-         
-            # Importare il database degli episodi, contiene titoli delle puntate, trama, copione...
-            self.df = pd.read_parquet(f"{path}/dati_puliti_aggiornati.parquet", engine="pyarrow")
-            progresso = aliveit(progress_bar=bar,loop_length=loop_length)
-
-            self.tf_idf_dataframe_title_trama = pd.read_parquet(f"{path}/tfidf_index_title_trama.parquet", engine="pyarrow")
-            progresso = aliveit(progress_bar=bar,loop_length=loop_length,progresso=progresso)
-
-
-            with open(f"{path}/word_dict_title_trama.json", 'r') as wd:
-               self.word_dict_title_trama  = json.load(wd)
-            progresso = aliveit(progress_bar=bar,loop_length=loop_length,progresso=progresso)
-
-
-            ## Import inverted_indexes
-            with open(f"{path}/inverted_idx_title_trama.json", 'r') as inv_idx:
-               self.inverted_idx_title_trama = json.load(inv_idx)
-            progresso = aliveit(progress_bar=bar,loop_length=loop_length,progresso=progresso)
-
-
-
-
    
-            self.tf_idf_dataframe_all= pd.read_parquet(f"{path}/tfidf_index_all.parquet", engine="pyarrow")
-            progresso = aliveit(progress_bar=bar,loop_length=loop_length,progresso=progresso)
+         # Importare il database degli episodi, contiene titoli delle puntate, trama, copione...
+         self.df = pd.read_parquet(f"{path}/dati_puliti_aggiornati.parquet", engine="pyarrow")
+    
+
+         self.tf_idf_dataframe_title_trama = pd.read_parquet(f"{path}/tfidf_index_title_trama.parquet", engine="pyarrow")
+    
 
 
+         with open(f"{path}/word_dict_title_trama.json", 'r') as wd:
+            self.word_dict_title_trama  = json.load(wd)
+    
+
+         ## Import inverted_indexes
+         with open(f"{path}/inverted_idx_title_trama.json", 'r') as inv_idx:
+            self.inverted_idx_title_trama = json.load(inv_idx)
+     
 
 
-            with open(f"{path}/word_dict_all.json", 'r') as wd:
-               self.word_dict_all  = json.load(wd)
-            progresso = aliveit(progress_bar=bar,loop_length=loop_length,progresso=progresso)
+         self.tf_idf_dataframe_all= pd.read_parquet(f"{path}/tfidf_index_all.parquet", engine="pyarrow")
+       
 
-            ## Import inverted_indexes
-            with open(f"{path}/inverted_idx_all.json", 'r') as inv_idx:
-               self.inverted_idx_all = json.load(inv_idx)
-            progresso = aliveit(progress_bar=bar,loop_length=loop_length,progresso=progresso)
-
-            self.nomi_personaggi = {"Luca":["Luca","Luca Nervi","Nervi"],
-                     "Paolo":["Paolo","Paolo Bitta","Bitta"],
-                  "Andrea":["Andrea","Andrea Pellegrino","Pellegrino"],
-                  "Ilaria":["Ilaria","Ilaria Tanadale","Tanadale","direttrice marketing"],
-                  "Alex":["Alessandra","Alessandra Costa","Costa","Alex"],
-                  "Gaia":["Gaia","Gaia De Bernardi","Gaia DeBernardi","DeBernardi","De Bernardi"],
-                  "Silvano":["Silvano","Silvano Rogi","Rogi"],
-                  "De Marinis":["Augusto","Augusto De Marinis","Augusto DeMarinis","De Marinis","DeMarinis","Direttore"],
-                  "Olmo":["Olmo","Olmo Ghesizzi","Ghesizzi"],
-                  "Geller":["Geller","Guido Geller","Dottor Geller","Guido"],
-                  "Patty":["Patty","Patrizia","Patty Dimporzano","Patrizia Dimporzano","Patty D'Imporzano","Patrizia D' Imporzano"],
-                  "Lucrezia":["Lucrezia","Lucrezia Orsini","Dottoressa Orsini","Orsini"],
-                  "Maria Eleonora":["Maria","Eleonora","Maria Eleonora Bau","Dottoressa Bau"],
-                  "Anna":["Anna","Anna Murazzi","Murazzi"],
-                  "Emma":["Emma","Emma Missale"],
-                  "Giovanna":["Giovanna","Giovanna Caleffi"],
-                  "Presidente":["Presidente","Il presidente"],
-                  "Pippo":["Pippo","Giuseppe Locascio","Giuseppe Lo Cascio"],
-                  "Anselmo":["Anselmo","Anselmo Pedone","Pedone"],
-                  "Gloria":["Gloria","Gloria Spallone"],
-                  "Jessica":["Jessica"],
-                  "Lello":["Lello"],
-                  "Valeria":["Valeria"],
-                  "Brad":["Brad"],
-                  "Jonathan":["Jonathan"],
-                  "Signora Bollini":["Signora Bollini"],
-                  "Mamma di Silvano":["Mamma di Silvano"],
-                  "Wanda":["Wanda","Wanda Sordi"],
-                  "Vittorio" : ["Vittorio","Vittorio Ubbiali","guardia","volpe di fuoco"],   
-                  "Carminati":["Michele","Michele Carminati","Carminati"],
-                  "Caterina":["Caterina"],
-                  "Pooh" :["Pooh","Roby","Roby Facchinetti","Facchinetti","Valerio Negrini","Negrini","Dodi Battaglia","Dodi","Red Canzian","Canzian","Stefano D'Orazio","D'Orazio","Poo","Pooo"],
-                  "Riccardo Fogli":["Riccardo Fogli"],
-                  "Roberto" :["Roberto"]
-               }
+         with open(f"{path}/word_dict_all.json", 'r') as wd:
+            self.word_dict_all  = json.load(wd)
+      
+         ## Import inverted_indexes
+         with open(f"{path}/inverted_idx_all.json", 'r') as inv_idx:
+            self.inverted_idx_all = json.load(inv_idx)
+       
+         self.nomi_personaggi = {"Luca":["Luca","Luca Nervi","Nervi"],
+                  "Paolo":["Paolo","Paolo Bitta","Bitta"],
+               "Andrea":["Andrea","Andrea Pellegrino","Pellegrino"],
+               "Ilaria":["Ilaria","Ilaria Tanadale","Tanadale","direttrice marketing"],
+               "Alex":["Alessandra","Alessandra Costa","Costa","Alex"],
+               "Gaia":["Gaia","Gaia De Bernardi","Gaia DeBernardi","DeBernardi","De Bernardi"],
+               "Silvano":["Silvano","Silvano Rogi","Rogi"],
+               "De Marinis":["Augusto","Augusto De Marinis","Augusto DeMarinis","De Marinis","DeMarinis","Direttore"],
+               "Olmo":["Olmo","Olmo Ghesizzi","Ghesizzi"],
+               "Geller":["Geller","Guido Geller","Dottor Geller","Guido"],
+               "Patty":["Patty","Patrizia","Patty Dimporzano","Patrizia Dimporzano","Patty D'Imporzano","Patrizia D' Imporzano"],
+               "Lucrezia":["Lucrezia","Lucrezia Orsini","Dottoressa Orsini","Orsini"],
+               "Maria Eleonora":["Maria","Eleonora","Maria Eleonora Bau","Dottoressa Bau"],
+               "Anna":["Anna","Anna Murazzi","Murazzi"],
+               "Emma":["Emma","Emma Missale"],
+               "Giovanna":["Giovanna","Giovanna Caleffi"],
+               "Presidente":["Presidente","Il presidente"],
+               "Pippo":["Pippo","Giuseppe Locascio","Giuseppe Lo Cascio"],
+               "Anselmo":["Anselmo","Anselmo Pedone","Pedone"],
+               "Gloria":["Gloria","Gloria Spallone"],
+               "Jessica":["Jessica"],
+               "Lello":["Lello"],
+               "Valeria":["Valeria"],
+               "Brad":["Brad"],
+               "Jonathan":["Jonathan"],
+               "Signora Bollini":["Signora Bollini"],
+               "Mamma di Silvano":["Mamma di Silvano"],
+               "Wanda":["Wanda","Wanda Sordi"],
+               "Vittorio" : ["Vittorio","Vittorio Ubbiali","guardia","volpe di fuoco"],   
+               "Carminati":["Michele","Michele Carminati","Carminati"],
+               "Caterina":["Caterina"],
+               "Pooh" :["Pooh","Roby","Roby Facchinetti","Facchinetti","Valerio Negrini","Negrini","Dodi Battaglia","Dodi","Red Canzian","Canzian","Stefano D'Orazio","D'Orazio","Poo","Pooo"],
+               "Riccardo Fogli":["Riccardo Fogli"],
+               "Roberto" :["Roberto"]
+            }
           
       except:
          raise ValueError("Errore nell'importazione dati, controllare il path e che tutti i file richiesti esistano")
