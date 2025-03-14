@@ -34,9 +34,7 @@ import unicodedata # Questo pacchetto serve per normalizzare le stringhe.
 
 import sys
 import os
-# Aggiungi il percorso al PYTHONPATH
-search_engine_dir = "/Users/mattia/Desktop/Camera cafe/_SitoWeb/backend"
-sys.path.append(search_engine_dir)
+
 
 from lemmatizzatore import lemmatizzazione
 from SearchEngine_class import SearchEngine
@@ -44,7 +42,7 @@ from SearchEngine_class import SearchEngine
 # endregion
 
 
-search_class = SearchEngine("/Users/mattia/Desktop/Camera cafe/_SitoWeb/backend/Dati")
+search_class = SearchEngine("/Dati")
 
 
 
