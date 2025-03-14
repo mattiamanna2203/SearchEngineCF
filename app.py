@@ -6,10 +6,6 @@ import json         # Lavorare con file json
 import re           # Lavorare con regular expression
 import numpy as np  # Lavorare con matrici 
 
-# Pacchetti per calcolare i valori  tf-idf
-from sklearn.feature_extraction.text import TfidfVectorizer # TF IDF
-from sklearn.metrics.pairwise import cosine_similarity      # Cosine similarity
-
 
 from collections import Counter # Dizionario speciale
 from functools import reduce
