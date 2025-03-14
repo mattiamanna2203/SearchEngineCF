@@ -2,7 +2,6 @@ Flask
 Gunicorn
 Pandas
 Numpy
-Json
 spacy
 Nltk
 Sklearn
